@@ -1,0 +1,53 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url = env("DATABASE_URL")
+}
+
+model users {
+  id             String             @id @default(uuid()) @db.Uuid
+  email          String          @unique
+  name           String?
+  created_at      DateTime        @default(now())
+  deleted_at      DateTime?
+  updated_at      DateTime?
+  expenses       expenses[]      @relation("UserExpenses")
+  created_parties parties[]       @relation("PartyCreator")
+  party_members   party_members[]
+}
+
+model parties {
+  id          String          @id @default(uuid()) @db.Uuid
+  name        String
+  created_by_id String        @db.Uuid
+  created_at   DateTime        @default(now())
+  expenses    expenses[]
+  created_by   users           @relation("PartyCreator", fields: [created_by_id], references: [id])
+  members     party_members[]
+}
+
+model party_members {
+  id      String  @id @default(uuid()) @db.Uuid
+  user_id  String @db.Uuid
+  party_id String  @db.Uuid
+  joined_at DateTime  @default(now())
+  left_at DateTime?
+  party   parties @relation(fields: [party_id], references: [id], onDelete: Cascade)
+  user    users   @relation(fields: [user_id], references: [id])
+
+  @@unique([user_id, party_id])
+}
+
+model expenses {
+  id        String   @id @default(uuid()) @db.Uuid
+  party_id   String   @db.Uuid
+  payer_id   String   @db.Uuid
+  amount    Decimal  @db.Decimal(10, 2)
+  reason    String?
+  created_at DateTime @default(now())
+  party     parties  @relation(fields: [party_id], references: [id])
+  payer     users    @relation("UserExpenses", fields: [payer_id], references: [id])
+}
