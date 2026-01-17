@@ -29,7 +29,7 @@ Cypress.Commands.add('createUser', (options = {}) => {
 
 /**
  * Deletes a user via the API (silent fail if not found)
- * @param {number} userId - The user ID to delete
+ * @param {string} userId - The user ID to delete
  * @returns {Cypress.Chainable}
  */
 Cypress.Commands.add('deleteUser', (userId) => {
@@ -42,4 +42,48 @@ Cypress.Commands.add('deleteUser', (userId) => {
     },
     failOnStatusCode: false,
   })
+})
+
+/**
+ * Creates a party via the API
+ * @param {string} userId - created_by_id
+ * @param {Object} options.name - optional party name
+ * @returns {Cypress.Chainable}
+ */
+Cypress.Commands.add('createParty', (userId, options = {}) => {
+  const name = options.name || `Test Party ${Date.now()}`;
+  const created_by_id = userId;
+  return cy.api({
+        method: 'POST',
+        url: '/api/parties',
+        body: {
+          "name": name,
+          "created_by_id": created_by_id
+        },
+        headers: {
+          'x-test-auth': "true",
+          'x-auth-id': userId
+        },
+        failOnStatusCode: false,
+    }).then((response) => {
+      return response.body;
+    })
+})
+
+/**
+ * Deletes a party via the API
+ * @param {string} party.id - Party ID to delete
+ * @param {string} party.created_by_id - Party creator
+ * @returns {Cypress.Chainable}
+ */
+Cypress.Commands.add('deleteParty', (party) => {
+  return cy.api({
+        method: 'DELETE',
+        url: `/api/parties/${party.id}`,
+        headers: {
+          'x-test-auth': "true",
+          'x-auth-id': party.created_by_id
+        },
+        failOnStatusCode: false
+    });
 })
